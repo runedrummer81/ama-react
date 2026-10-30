@@ -1,0 +1,2124 @@
+/* ==========================================================================
+   RUNE-AMABOT — Sci-fi HUD tema v2
+   Inspireret af portfolio-paletten: mørke lag (primary/midnight/navy/storm)
+   + neon-accenter (aqua/coral), glow-puls og scanlines.
+   ========================================================================== */
+
+@import url("https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@500;700&family=JetBrains+Mono:wght@400;500;600&display=swap");
+
+:root {
+  /* --- Baggrunds-lag (mørk til lys, bruges til dybde) --- */
+  --color-primary: #030412;
+  --color-midnight: #06091f;
+  --color-navy: #161a31;
+  --color-storm: #282b4b;
+
+  /* --- Neon-accenter --- */
+  --color-aqua: #33c2cc; /* hovedaccent — svar, borders, glow */
+  --color-coral: #ea4884; /* sekundær accent — spørgsmål, highlights */
+  --color-aqua-dim: #33c2cc33;
+  --color-coral-dim: #ea488433;
+
+  /* --- Tekst --- */
+  --color-text: #e8f6f8;
+  --color-text-dim: #6b7a94;
+  --color-error: #ff3b5c;
+
+  /* --- Typografi --- */
+  --font-mono: "Share Tech Mono", "Courier New", monospace;
+  --font-display: "Orbitron", var(--font-mono);
+
+  /* --- Layout --- */
+  --radius: 4px;
+  --glow-sm: 0 0 6px var(--color-aqua-dim);
+  --glow-md: 0 0 16px var(--color-aqua-dim);
+}
+
+.bg-layer {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  display: block;
+  pointer-events: none;
+}
+
+#bg-layer-0 {
+  filter: blur(6px);
+}
+#bg-layer-1 {
+  filter: blur(4.5px);
+}
+#bg-layer-2 {
+  filter: blur(3px);
+}
+#bg-layer-3 {
+  filter: blur(2px);
+}
+#bg-layer-4 {
+  filter: blur(1px);
+}
+#bg-layer-5 {
+  filter: blur(0.4px);
+}
+#bg-layer-6 {
+  filter: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  height: 100vh;
+  background: var(--color-primary);
+  color: var(--color-text);
+  font-family: var(--font-mono);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+@keyframes glitch-burst-1 {
+  0%,
+  92%,
+  100% {
+    transform: translate(0, 0);
+    opacity: 0;
+  }
+  93% {
+    transform: translate(-3px, 1px);
+    opacity: 0.7;
+  }
+  94% {
+    transform: translate(2px, -1px);
+    opacity: 0.7;
+  }
+  95% {
+    transform: translate(-2px, 0);
+    opacity: 0.5;
+  }
+  96% {
+    transform: translate(0, 0);
+    opacity: 0;
+  }
+}
+
+@keyframes glitch-burst-2 {
+  0%,
+  92%,
+  100% {
+    transform: translate(0, 0);
+    opacity: 0;
+  }
+  93% {
+    transform: translate(3px, -1px);
+    opacity: 0.7;
+  }
+  94% {
+    transform: translate(-2px, 1px);
+    opacity: 0.7;
+  }
+  95% {
+    transform: translate(2px, 0);
+    opacity: 0.5;
+  }
+  96% {
+    transform: translate(0, 0);
+    opacity: 0;
+  }
+}
+
+/* --- Chat-sektion --- */
+
+main {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  padding: 1.5rem 1rem;
+  min-height: 0;
+  overflow: visible;
+}
+
+.chat {
+  width: 100%;
+  max-width: min(90vw, 1040px);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-height: 0;
+}
+
+/* Når velkomstskærmen vises: kun heading + input er synlige, og de
+   centreres som gruppe midt på skærmen i stedet for at input sidder
+   fastlåst i bunden. */
+.chat.is-welcome {
+  justify-content: center;
+  gap: 0.8rem;
+}
+
+.chat.is-welcome .chat-input input {
+  padding: 0.85rem 0.2rem;
+  font-size: clamp(1.05rem, 2vw, 1.3rem);
+}
+
+.chat-toolbar {
+  position: absolute;
+  left: -1px; /* på linje med panelets ydre venstre kant */
+  bottom: 100%; /* fanens bund = kantens position */
+  z-index: 5;
+}
+
+.chat-tab {
+  position: relative;
+  height: var(--tab-h);
+  filter: drop-shadow(0 0 15px rgba(51, 194, 204, 0.35));
+}
+
+.tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  height: 100%;
+  padding: 0 44px 0 18px;
+  border: 0;
+  border-radius: 0;
+  background: var(--frame);
+  color: var(--color-text);
+  clip-path: polygon(0 0, calc(100% - 26px) 0, 100% 100%, 0 100%);
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.tab-btn svg {
+  flex: none;
+}
+
+.tab-btn:hover,
+.tab-btn:focus-visible {
+  background: var(--color-aqua);
+  color: #03121a;
+}
+
+.tab-btn:focus-visible {
+  outline: none;
+}
+
+/* --- Velkomstskærm — vist når der ikke er nogen beskeder endnu --- */
+
+.welcome {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 0;
+  text-align: center;
+}
+
+.welcome-frame {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.welcome-heading {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(2.4rem, 6vw, 4.2rem);
+  letter-spacing: 0.15em;
+  color: var(--color-aqua);
+  text-shadow: var(--glow-md);
+  margin: 0;
+  position: relative;
+  display: inline-block;
+}
+
+.welcome-heading::before,
+.welcome-heading::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  opacity: 0;
+}
+
+.welcome-heading::before {
+  color: var(--color-coral);
+  animation: glitch-burst-1 5s infinite linear;
+}
+
+.welcome-heading::after {
+  color: var(--color-aqua);
+  animation: glitch-burst-2 5s infinite linear;
+}
+
+.welcome-panel {
+  position: relative;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  background: rgba(12, 36, 55, 0.88);
+  border: 1px solid var(--color-aqua);
+  border-radius: 0;
+  padding: clamp(1.75rem, 5vw, 3.5rem);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 0 10px rgba(51, 194, 204, 0.3);
+  transition: box-shadow 0.25s ease;
+}
+
+.welcome-panel .chat-input {
+  width: 100%;
+}
+
+.welcome-panel-label {
+  position: absolute;
+  top: -0.6rem;
+  left: 1rem;
+  background: var(--color-primary);
+  padding: 0 0.5rem;
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  color: var(--color-text-dim);
+}
+
+/* Aktiv (markøren står i feltet): lidt kraftigere glød + lysstrejf */
+.welcome-panel.is-active {
+  box-shadow: 0 0 20px rgba(51, 194, 204, 0.55);
+}
+
+/* Fane øverst til venstre som NY_CHAT-fanen: samme farve som kanten, og
+   den skrå ende peger ned i panelet. */
+.panel-tab {
+  position: absolute;
+  left: -1px;
+  bottom: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  height: 34px;
+  padding: 0 40px 0 16px;
+  background: var(--color-aqua);
+  color: #03121a;
+  clip-path: polygon(0 0, calc(100% - 22px) 0, 100% 100%, 0 100%);
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  pointer-events: none;
+}
+
+.panel-tab-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #03121a;
+}
+
+/* Fælles hjælpeklasse til at skjule velkomst/beskeder efter behov */
+.is-hidden {
+  display: none !important;
+}
+
+/* Beskedpanelet er nu selve hologrammets "brede top" — ingen solid
+   glas-baggrund længere. Den smalle kegle der forbinder panelet til
+   grid-gulvets horisontlinje tegnes af #hologram-beam (se bg.js);
+   panelet her skal bare læse som lys, ikke som en boks. */
+
+.messages {
+  --frame: #247a88; /* NY: massiv kantfarve, delt med fanen */
+  --tab-h: 40px; /* NY */
+  margin-top: var(--tab-h); /* NY: plads til fanen over panelet */
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  flex: 1;
+  min-height: 0;
+  /* Flad, let aqua-tonet transparens i stedet for en mørk baggrund —
+     panelet skal læse som farvet lys, ikke som en mørk skærm. Ingen blur:
+     et hologram er skarpt, ikke diskret/glas-agtigt. Transparensen (0.1)
+     er det der gør det til hologram frem for solid flade — man aner
+     stadig scenen bagved. */
+  background: rgba(51, 194, 204, 0.1);
+  border: 1px solid var(--frame);
+  border-radius: var(--radius);
+  box-shadow:
+    0 0 30px rgba(51, 194, 204, 0.35),
+    inset 0 0 24px rgba(51, 194, 204, 0.12);
+  overflow: visible;
+  /* To animationer med forskellig varighed (6s / 9s) i stedet for én —
+     de driver ud af fase med hinanden (mødes først igen efter 18s), så
+     det ikke føles som ét fast, forudsigeligt loop. box-shadow og
+     outline er IKKE påvirket af overflow:hidden ovenfor, så glitchet
+     kan ligge udenfor kanten uden at blive klippet væk. */
+  animation:
+    messagesFlicker 6s infinite,
+    messagesEdgeGlitch 9s infinite;
+}
+
+@keyframes messagesEdgeGlitch {
+  /* Roligt i langt de fleste af de 9 sekunder... */
+  0%,
+  90%,
+  100% {
+    outline: 0px solid transparent;
+    outline-offset: 0px;
+    box-shadow:
+      0 0 30px rgba(51, 194, 204, 0.35),
+      inset 0 0 24px rgba(51, 194, 204, 0.12);
+  }
+  /* ...og så et kort chromatic-split-glimt på selve kanten, à la
+     RGB-split-glitchet på hero-billedet. */
+  91% {
+    outline: 2px solid rgba(234, 72, 132, 0.65);
+    outline-offset: 2px;
+    box-shadow:
+      0 0 30px rgba(51, 194, 204, 0.35),
+      inset 0 0 24px rgba(51, 194, 204, 0.12),
+      -3px 0 0 rgba(51, 194, 204, 0.55),
+      3px 0 0 rgba(234, 72, 132, 0.55);
+  }
+  92.5% {
+    outline: 2px solid rgba(51, 194, 204, 0.55);
+    outline-offset: -1px;
+    box-shadow:
+      0 0 30px rgba(51, 194, 204, 0.35),
+      inset 0 0 24px rgba(51, 194, 204, 0.12),
+      3px 0 0 rgba(51, 194, 204, 0.5),
+      -3px 0 0 rgba(234, 72, 132, 0.5);
+  }
+  94% {
+    outline: 0px solid transparent;
+    outline-offset: 0px;
+    box-shadow:
+      0 0 30px rgba(51, 194, 204, 0.35),
+      inset 0 0 24px rgba(51, 194, 204, 0.12);
+  }
+}
+
+@keyframes messagesFlicker {
+  0%,
+  91%,
+  93.5%,
+  95%,
+  100% {
+    filter: brightness(1);
+  }
+  92% {
+    filter: brightness(1.2);
+  }
+  94% {
+    filter: brightness(0.88);
+  }
+}
+
+.messages-label {
+  position: absolute;
+  top: 14px;
+  left: 18px;
+  z-index: 4;
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  color: var(--color-aqua);
+  pointer-events: none;
+}
+
+.messages-scanlines {
+  /* Slået fra — konstant rullende scanlines gav ikke nok. Erstattet af
+     et lejlighedsvist glitch-glimt på kanten (messagesEdgeGlitch, se
+     .messages nedenfor) i stedet. Elementet ligger stadig i index.html,
+     men gør ingenting nu. */
+  display: none;
+}
+@keyframes messagesScanMove {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 0 40px;
+  }
+}
+
+.messages-vignette {
+  /* Slået fra — den mørklagde hjørnerne, hvilket gav mening på den
+     gamle mørke baggrund, men ser mærkeligt/plettet ud oven på den
+     flade aqua-tone. */
+  display: none;
+}
+
+.messages-grain {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.045;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+  animation: messagesGrainShift 0.25s steps(1) infinite;
+}
+@keyframes messagesGrainShift {
+  0% {
+    background-position: 0 0;
+  }
+  50% {
+    background-position: 24px -14px;
+  }
+  100% {
+    background-position: -18px 10px;
+  }
+}
+
+/* .messages-sheen er bevidst ikke stylet længere — den diagonale
+   lys-refleksion er det der fik panelet til at føles som glas i stedet
+   for hologram. Selve elementet ligger stadig i index.html (harmløst,
+   usynligt uden denne regel); fjern det roligt fra markupet når du
+   støder på det, hvis du vil rydde op. */
+
+.messages-inner {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  z-index: 3;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 2.75rem 1rem 1.5rem;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-aqua-dim) transparent;
+}
+
+.messages-input-bar {
+  position: relative;
+  z-index: 3;
+  flex: 0 0 auto;
+  margin: 0 1rem;
+}
+
+.messages-horizon-gap {
+  flex: 0 0 14%;
+  min-height: 0;
+  pointer-events: none;
+}
+
+.messages-inner::-webkit-scrollbar {
+  width: 5px;
+}
+.messages-inner::-webkit-scrollbar-track {
+  background: transparent;
+}
+.messages-inner::-webkit-scrollbar-thumb {
+  background: var(--color-aqua-dim);
+  border-radius: 3px;
+}
+.messages-inner::-webkit-scrollbar-thumb:hover {
+  background: var(--color-aqua);
+}
+
+.messages::-webkit-scrollbar {
+  width: 5px;
+}
+
+.messages::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.messages::-webkit-scrollbar-thumb {
+  background: var(--color-aqua-dim);
+  border-radius: 3px;
+}
+
+.messages::-webkit-scrollbar-thumb:hover {
+  background: var(--color-aqua);
+}
+
+/* Beskeder — "fane-kort" med skrå kant.
+   Hver besked = en lille header-fane (tidspunkt) + en krop med én skrå side.
+   Svarets skrå kant sidder til højre, brugerens til venstre, og de to former
+   er hinandens spejlbillede (180°), så de passer visuelt sammen.
+
+   Kanten (1px) laves uden border, fordi border ikke følger et clip-path:
+   selve <p> er farvet i accent-farven og klippet i formen, og ::before
+   lægger en 1px mindre fyldflade med samme form oven på. */
+
+.messages article {
+  --accent: var(--color-aqua);
+  --fill: #0c2437;
+  --slant: 16px; /* hvor skrå den skrå kant er */
+  --tab-slant: 10px;
+
+  max-width: 75%;
+  min-width: 0;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.messages article.question {
+  --accent: var(--color-coral);
+  --fill: #26132d;
+  align-self: flex-end;
+  align-items: flex-end;
+}
+
+.messages article.answer {
+  align-self: flex-start;
+  align-items: flex-start;
+}
+
+/* Header-fane med tidspunkt */
+.messages article time {
+  display: block;
+  padding: 4px 12px;
+  background: var(--accent);
+  color: #03121a;
+  font-family: var(--font-display);
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  line-height: 1.4;
+}
+
+.messages article.answer time {
+  padding-right: 22px;
+  clip-path: polygon(0 0, 100% 0, calc(100% - var(--tab-slant)) 100%, 0 100%);
+}
+
+.messages article.question time {
+  padding-left: 22px;
+  color: #1a0512;
+  clip-path: polygon(var(--tab-slant) 0, 100% 0, 100% 100%, 0 100%);
+}
+
+/* Krop */
+.messages article p {
+  position: relative;
+  isolation: isolate; /* holder ::before (z-index: -1) inde i kortet */
+  margin: 0;
+  background: var(--accent);
+  line-height: 1.45;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  color: var(--color-text);
+}
+
+.messages article p::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  z-index: -1;
+  background: var(--fill);
+}
+
+/* Svar: skrå kant til højre (bunden trukket ind) */
+.messages article.answer p {
+  padding: 0.75rem calc(var(--slant) + 14px) 0.75rem 1.1rem;
+  clip-path: polygon(0 0, 100% 0, calc(100% - var(--slant)) 100%, 0 100%);
+}
+.messages article.answer p::before {
+  clip-path: polygon(0 0, 100% 0, calc(100% - var(--slant)) 100%, 0 100%);
+}
+
+/* Spørgsmål: skrå kant til venstre (toppen trukket ind) */
+.messages article.question p {
+  padding: 0.75rem 1.1rem 0.75rem calc(var(--slant) + 14px);
+  clip-path: polygon(var(--slant) 0, 100% 0, 100% 100%, 0 100%);
+}
+.messages article.question p::before {
+  clip-path: polygon(var(--slant) 0, 100% 0, 100% 100%, 0 100%);
+}
+
+/* Kun de to seneste beskeder (nyt spørgsmål + svar) får en
+   "materialiserings"-animation — resten af historikken skal
+   ikke re-animere ved hvert page reload.
+   Glødet bruger drop-shadow i stedet for box-shadow: en box-shadow ville
+   tegne et rektangel rundt om hele kortet (også det tomme ved fanen),
+   mens drop-shadow følger den klippede form. */
+
+.messages article.question:nth-last-child(-n + 2) {
+  animation: spawnQuestion 240ms steps(1, end) both;
+}
+
+.messages article.answer:nth-last-child(-n + 2) {
+  animation: spawnAnswer 0.5s ease-out backwards;
+}
+
+@keyframes spawnQuestion {
+  0% {
+    clip-path: inset(0 -20px 0 100%);
+    transform: translateX(10px);
+    filter: drop-shadow(-5px 0 0 rgba(51, 194, 204, 0.9))
+      drop-shadow(5px 0 0 rgba(234, 72, 132, 0.9));
+  }
+  25% {
+    clip-path: inset(0 -20px 0 60%);
+    transform: translateX(-5px);
+    filter: drop-shadow(5px 0 0 rgba(51, 194, 204, 0.9))
+      drop-shadow(-5px 0 0 rgba(234, 72, 132, 0.9));
+  }
+  50% {
+    clip-path: inset(0 -20px 0 25%);
+    transform: translateX(4px);
+    filter: drop-shadow(-3px 0 0 rgba(51, 194, 204, 0.8))
+      drop-shadow(3px 0 0 rgba(234, 72, 132, 0.8));
+  }
+  75% {
+    clip-path: inset(0 -20px 0 6%);
+    transform: translateX(-2px);
+    filter: drop-shadow(2px 0 0 rgba(51, 194, 204, 0.7))
+      drop-shadow(-2px 0 0 rgba(234, 72, 132, 0.7));
+  }
+  100% {
+    clip-path: inset(0 -20px 0 -20px);
+    transform: none;
+    filter: none;
+  }
+}
+
+@keyframes spawnAnswer {
+  0% {
+    opacity: 0;
+    transform: translateY(14px) scale(0.94);
+    filter: drop-shadow(0 0 12px rgba(51, 194, 204, 0.7));
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(0) scale(1.02);
+  }
+  100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 0 rgba(51, 194, 204, 0));
+  }
+}
+
+/* Mens svaret "dekrypteres": dæmpet aqua, som om signalet ikke er låst endnu.
+   Når klassen fjernes, glider farverne op til fuld styrke. */
+.messages article.answer.is-decrypting {
+  --accent: rgba(51, 194, 204, 0.4);
+}
+
+.messages article.answer.is-decrypting time {
+  color: rgba(232, 246, 248, 0.6);
+}
+
+.messages article.answer.is-decrypting p {
+  color: #4fb3bc;
+}
+
+.messages article time,
+.messages article p {
+  transition:
+    color 0.3s ease,
+    background-color 0.3s ease;
+}
+
+/* --- Input-felt --- */
+
+.chat-input {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--color-aqua-dim);
+  border-radius: 0;
+  overflow: visible;
+  transition: border-color 0.2s ease;
+}
+
+.input-area {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 2;
+}
+
+.chat-input:focus-within {
+  border-color: var(--color-aqua);
+}
+
+@keyframes glowPulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 12px rgba(51, 194, 204, 0.25),
+      0 0 24px rgba(51, 194, 204, 0.1);
+  }
+  50% {
+    box-shadow:
+      0 0 20px rgba(51, 194, 204, 0.5),
+      0 0 36px rgba(51, 194, 204, 0.25);
+  }
+}
+
+.chat-input label {
+  /* Kun for skærmlæsere — feltet har en placeholder som visuelt label */
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.chat-input input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 0.8rem 1rem;
+  color: var(--color-text);
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  outline: none;
+  caret-color: var(--color-aqua);
+}
+
+.chat-input input::placeholder {
+  color: var(--color-text-dim);
+}
+
+.chat-input button {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  margin: 0 0.4rem;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease,
+    background 0.2s ease;
+}
+
+.chat-input input:focus {
+  color: var(--color-aqua);
+}
+
+/* Skjult (usynlig + skaleret ned) indtil feltet indeholder mindst ét tegn.
+   Send-knappen har ingen synlig "disabled, men klikbar"-fornemmelse —
+   den er der simpelthen ikke, før man har noget at sende. */
+.chat-input button:disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.chat-input button:disabled:hover {
+  background: transparent;
+  box-shadow: none;
+}
+
+.char-counter {
+  flex-shrink: 0;
+  font-size: 1rem;
+  color: var(--color-text-dim);
+  padding: 0 0.5rem;
+  white-space: nowrap;
+}
+
+.char-counter--limit {
+  color: var(--color-error);
+  font-weight: bold;
+}
+
+/* --- Knapper (generelt) --- */
+
+button {
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  letter-spacing: 0.05em;
+  padding: 0.8rem 1.3rem;
+  background: transparent;
+  color: var(--color-aqua);
+  border: 1px solid var(--color-aqua);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    box-shadow 0.2s ease,
+    color 0.2s ease;
+}
+
+button:hover {
+  background: var(--color-aqua-dim);
+  box-shadow: var(--glow-sm);
+}
+
+button:focus-visible {
+  outline: 2px solid var(--color-aqua);
+  outline-offset: 2px;
+}
+
+/* "Ny chat" / "Hvad kan du?" — cirkulære ikon-knapper med custom tooltip
+   i stedet for tekst */
+
+.icon-btn {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: var(--color-text-dim);
+  border-color: var(--color-aqua-dim);
+}
+
+.icon-btn:hover,
+.icon-btn:focus-visible {
+  color: var(--color-aqua);
+  border-color: var(--color-aqua);
+}
+
+.icon-btn::after {
+  content: attr(aria-label);
+  position: absolute;
+  bottom: 120%;
+  left: 0;
+  transform: translateY(-4px);
+  background: var(--color-navy);
+  color: var(--color-text);
+  border: 1px solid var(--color-aqua-dim);
+  border-radius: var(--radius);
+  padding: 0.3rem 0.6rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+  box-shadow: var(--glow-sm);
+}
+
+.utility-btn::after {
+  content: none;
+}
+
+.utility-btn:hover::after,
+.utility-btn:focus-visible::after {
+  transform: translate(-50%, 0);
+}
+
+.icon-btn:hover::after,
+.icon-btn:focus-visible::after {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Forslag: ens parallelogrammer, der hælder til venstre. Kanten (1px)
+   laves som på beskederne: chippen er farvet i accent-farven, og ::before
+   lægger fyldet 1px inde med samme form. */
+.suggestions {
+  --chip-accent: var(--color-aqua);
+  --chip-fill: #0c2437;
+  --chip-slant: 16px;
+
+  display: flex;
+  gap: 0.75rem;
+  filter: drop-shadow(0 0 10px rgba(51, 194, 204, 0.3));
+}
+
+.suggestion-chip {
+  flex: 1;
+  position: relative;
+  isolation: isolate;
+  text-align: center;
+  background: var(--chip-accent);
+  border: 0;
+
+  border-radius: 0;
+  color: var(--chip-accent);
+  font-family: var(--font-mono);
+  font-size: clamp(0.95rem, 1.9vw, 1.15rem);
+  letter-spacing: 0.03em;
+  padding: clamp(0.85rem, 2vw, 1.3rem) calc(var(--chip-slant) + 0.6rem);
+  cursor: pointer;
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--chip-slant)) 0,
+    100% 100%,
+    var(--chip-slant) 100%
+  );
+  transition: color 0.2s ease;
+}
+
+.suggestion-chip::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  z-index: -1;
+  background: var(--chip-fill);
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--chip-slant)) 0,
+    100% 100%,
+    var(--chip-slant) 100%
+  );
+  transition: background 0.2s ease;
+}
+
+.suggestion-chip:hover,
+.suggestion-chip:focus-visible {
+  background: var(--chip-accent);
+  color: #1a0512;
+  box-shadow: none;
+}
+
+.suggestion-chip:hover::before,
+.suggestion-chip:focus-visible::before {
+  background: var(--chip-accent);
+}
+
+/* --- Top-actions (lyd / sprog / tema) ---
+   Rent visuelle togglere for nu — funktionaliteten kobles på senere. */
+
+.top-actions {
+  position: fixed;
+  top: 1.5rem;
+  right: 1.25rem;
+  z-index: 50;
+  display: flex;
+  align-items: stretch;
+  background: rgba(6, 9, 31, 0.82);
+  border: 1px solid var(--color-aqua-dim);
+  border-radius: var(--radius);
+  box-shadow: 0 0 14px rgba(51, 194, 204, 0.12);
+  padding: 6px;
+}
+
+.utility-btn {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  border: none;
+  border-radius: 2px;
+  background: transparent;
+  color: var(--color-text-dim);
+}
+
+.utility-btn:hover,
+.utility-btn:focus-visible {
+  color: var(--color-aqua);
+  background: rgba(51, 194, 204, 0.12);
+  border-color: transparent;
+}
+
+.utility-btn + .utility-btn {
+  margin-left: 6px;
+}
+
+.utility-btn + .utility-btn::before {
+  content: "";
+  position: absolute;
+  left: -4px;
+  top: 8px;
+  bottom: 8px;
+  width: 1px;
+  background: var(--color-aqua-dim);
+}
+
+.lang-btn {
+  font-size: 0.95rem;
+  font-weight: bold;
+}
+
+.utility-btn .icon-off {
+  display: none;
+}
+
+.utility-btn[aria-pressed="true"] .icon-on {
+  display: none;
+}
+
+.utility-btn[aria-pressed="true"] .icon-off {
+  display: block;
+}
+
+.hero-photo-wrap {
+  position: fixed;
+  left: -110px;
+  bottom: 0;
+  height: 100vh;
+  aspect-ratio: 1250 / 1400;
+  z-index: 1;
+  pointer-events: auto;
+  user-select: none;
+  cursor: default;
+
+  animation: heroJolt 6.4s infinite linear;
+}
+
+.hero-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.hero-photo-tint {
+  position: absolute;
+  inset: 0;
+  background: var(--color-aqua);
+  mix-blend-mode: color;
+  opacity: 0.6;
+  -webkit-mask-image: url("/rune.png");
+  mask-image: url("/rune.png");
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+
+.hero-photo-wrap:hover .hero-photo-tint {
+  opacity: 0.45;
+  transition: opacity 0.4s ease;
+}
+
+/* --- Glitch-event: skiver + RGB-split + støj, ét samlet burst hvert 6,4s --- */
+
+.hero-slice,
+.hero-rgb {
+  position: absolute;
+  inset: 0;
+  background-image: url("/rune.png");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  pointer-events: none;
+  opacity: 0;
+
+  -webkit-mask-image: url("/rune.png");
+  mask-image: url("/rune.png");
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+
+.hero-slice--1 {
+  clip-path: inset(0 0 75% 0);
+}
+.hero-slice--2 {
+  clip-path: inset(25% 0 50% 0);
+}
+.hero-slice--3 {
+  clip-path: inset(50% 0 25% 0);
+}
+.hero-slice--4 {
+  clip-path: inset(75% 0 0 0);
+}
+
+.hero-slice--1 {
+  animation: heroSlice1 6.4s infinite linear;
+}
+.hero-slice--2 {
+  animation: heroSlice2 6.4s infinite linear;
+}
+.hero-slice--3 {
+  animation: heroSlice3 6.4s infinite linear;
+}
+.hero-slice--4 {
+  animation: heroSlice4 6.4s infinite linear;
+}
+
+@keyframes heroSlice1 {
+  0%,
+  91%,
+  100% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+  92% {
+    opacity: 1;
+    transform: translateX(-14px);
+  }
+  93% {
+    opacity: 1;
+    transform: translateX(10px);
+  }
+  94% {
+    opacity: 0.8;
+    transform: translateX(-4px);
+  }
+  95% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+}
+@keyframes heroSlice2 {
+  0%,
+  91.5%,
+  100% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+  92.5% {
+    opacity: 1;
+    transform: translateX(12px);
+  }
+  93.5% {
+    opacity: 1;
+    transform: translateX(-16px);
+  }
+  94.5% {
+    opacity: 0.7;
+    transform: translateX(6px);
+  }
+  95.5% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+}
+@keyframes heroSlice3 {
+  0%,
+  92%,
+  100% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+  93% {
+    opacity: 1;
+    transform: translateX(-18px);
+  }
+  94% {
+    opacity: 1;
+    transform: translateX(8px);
+  }
+  95% {
+    opacity: 0.6;
+    transform: translateX(-10px);
+  }
+  96% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+}
+@keyframes heroSlice4 {
+  0%,
+  92.5%,
+  100% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+  93.5% {
+    opacity: 1;
+    transform: translateX(16px);
+  }
+  94.5% {
+    opacity: 1;
+    transform: translateX(-12px);
+  }
+  95.5% {
+    opacity: 0.7;
+    transform: translateX(4px);
+  }
+  96.5% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+}
+
+.hero-rgb--r {
+  filter: url(#glitch-red-channel);
+  mix-blend-mode: screen;
+  animation: heroRgbR 6.4s infinite linear;
+}
+.hero-rgb--b {
+  filter: url(#glitch-blue-channel);
+  mix-blend-mode: screen;
+  animation: heroRgbB 6.4s infinite linear;
+}
+
+@keyframes heroRgbR {
+  0%,
+  91%,
+  100% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+  92%,
+  96% {
+    opacity: 0.85;
+  }
+  93% {
+    transform: translateX(6px);
+  }
+  95% {
+    transform: translateX(-3px);
+  }
+  97% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+}
+@keyframes heroRgbB {
+  0%,
+  91%,
+  100% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+  92%,
+  96% {
+    opacity: 0.85;
+  }
+  93% {
+    transform: translateX(-6px);
+  }
+  95% {
+    transform: translateX(3px);
+  }
+  97% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+}
+
+.hero-noise {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0;
+  animation: heroNoiseFlash 6.4s infinite steps(1);
+
+  -webkit-mask-image: url("/rune.png");
+  mask-image: url("/rune.png");
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+
+@keyframes heroNoiseFlash {
+  0%,
+  91%,
+  97%,
+  100% {
+    opacity: 0;
+  }
+  92% {
+    opacity: 0.35;
+  }
+  93% {
+    opacity: 0.15;
+  }
+  94% {
+    opacity: 0.45;
+  }
+  95% {
+    opacity: 0.1;
+  }
+  96% {
+    opacity: 0.25;
+  }
+}
+
+@keyframes heroJolt {
+  0%,
+  91%,
+  97%,
+  100% {
+    filter: none;
+  }
+  93% {
+    filter: contrast(1.5) brightness(1.25);
+  }
+  95% {
+    filter: contrast(1.2) brightness(0.9);
+  }
+}
+
+/* --- Konstant, meget svag static-tekstur i hvile (adskilt fra glitch-eventet) --- */
+
+/* --- Konstant, svag static-tekstur i hvile (adskilt fra glitch-eventet) --- */
+
+.hero-idle-static {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+  opacity: 50.8;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 250px 250px;
+  animation: heroIdleStatic 0.2s steps(1) infinite;
+
+  -webkit-mask-image: url("/rune.png");
+  mask-image: url("/rune.png");
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+
+@keyframes heroIdleStatic {
+  0% {
+    background-position: 0px 0px;
+  }
+  20% {
+    background-position: 37px -19px;
+  }
+  40% {
+    background-position: -22px 41px;
+  }
+  60% {
+    background-position: 58px 12px;
+  }
+  80% {
+    background-position: -31px -27px;
+  }
+  100% {
+    background-position: 0px 0px;
+  }
+}
+
+.welcome-panel.is-sending {
+  animation: panelPulseFeedback 0.25s ease-out 1;
+}
+
+main,
+footer {
+  pointer-events: none;
+}
+
+.bg-vignette {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 85% 80% at 50% 55%,
+    rgba(6, 9, 31, 0.88) 0%,
+    rgba(6, 9, 31, 0.55) 45%,
+    transparent 80%
+  );
+}
+
+.chat {
+  pointer-events: auto;
+}
+
+/* ==========================================================================
+   OVERGANG: velkomst -> chat (hero, panel og chips glitcher/folder væk)
+   ========================================================================== */
+
+@keyframes glitchExitLeft {
+  0% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-140px);
+  }
+}
+@keyframes glitchExitRight {
+  0% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(140px);
+  }
+}
+
+/* --- Hero glitcher væk --- */
+
+.hero-photo-wrap.is-exiting {
+  animation: none;
+  pointer-events: none;
+}
+
+.hero-photo-wrap.is-exiting .hero-photo,
+.hero-photo-wrap.is-exiting .hero-photo-tint,
+.hero-photo-wrap.is-exiting .hero-idle-static {
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+.hero-photo-wrap.is-exiting .hero-rgb,
+.hero-photo-wrap.is-exiting .hero-noise {
+  animation: none;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+.hero-photo-wrap.is-exiting .hero-slice--1 {
+  animation: glitchExitLeft 0.5s ease-in forwards;
+}
+.hero-photo-wrap.is-exiting .hero-slice--2 {
+  animation: glitchExitRight 0.5s ease-in 0.03s forwards;
+}
+.hero-photo-wrap.is-exiting .hero-slice--3 {
+  animation: glitchExitLeft 0.5s ease-in 0.06s forwards;
+}
+.hero-photo-wrap.is-exiting .hero-slice--4 {
+  animation: glitchExitRight 0.5s ease-in 0.09s forwards;
+}
+
+/* --- Panel: puls -> fold sammen -> flyv ud --- */
+
+@keyframes panelPulseFeedback {
+  0%,
+  100% {
+    box-shadow: 0 0 10px rgba(51, 194, 204, 0.3);
+  }
+  30% {
+    box-shadow: 0 0 36px rgba(51, 194, 204, 0.7);
+  }
+  60% {
+    box-shadow: 0 0 14px rgba(51, 194, 204, 0.35);
+  }
+  80% {
+    box-shadow: 0 0 30px rgba(51, 194, 204, 0.55);
+  }
+}
+
+@keyframes panelCollapse {
+  0% {
+    transform: scaleY(1) scaleX(1);
+    opacity: 1;
+  }
+  55% {
+    transform: scaleY(0.03) scaleX(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scaleY(0.03) scaleX(0.02);
+    opacity: 1;
+  }
+}
+
+.welcome-panel.is-collapsing {
+  animation: panelCollapse 0.45s cubic-bezier(0.6, 0, 0.8, 0.2) forwards;
+  transform-origin: center center;
+}
+
+@keyframes panelFlyOut {
+  0% {
+    transform: scaleY(0.03) scaleX(0.02) translateY(0);
+    opacity: 1;
+    filter: blur(0);
+  }
+  100% {
+    transform: scaleY(0.03) scaleX(0.02) translateY(-260%);
+    opacity: 0;
+    filter: blur(6px);
+  }
+}
+
+.welcome-panel.is-flying {
+  animation: panelFlyOut 0.35s ease-in forwards;
+  transform-origin: center center;
+}
+
+/* --- Forslagschips glitcher væk (samme teknik som hero) --- */
+
+.suggestion-chip {
+  position: relative;
+}
+
+.chip-label {
+  position: relative;
+}
+
+.chip-slice {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--chip-fill);
+  border: 1px solid var(--chip-accent);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.chip-slice--1 {
+  clip-path: inset(0 0 75% 0);
+}
+.chip-slice--2 {
+  clip-path: inset(25% 0 50% 0);
+}
+.chip-slice--3 {
+  clip-path: inset(50% 0 25% 0);
+}
+.chip-slice--4 {
+  clip-path: inset(75% 0 0 0);
+}
+
+.suggestions.is-exiting .suggestion-chip {
+  clip-path: none;
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  transition:
+    background 0.3s ease,
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.suggestions.is-exiting .suggestion-chip::before {
+  opacity: 0;
+}
+
+.suggestions.is-exiting .chip-label {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.suggestions.is-exiting .chip-slice--1 {
+  animation: glitchExitLeft 0.4s ease-in forwards;
+}
+.suggestions.is-exiting .chip-slice--2 {
+  animation: glitchExitRight 0.4s ease-in 0.03s forwards;
+}
+.suggestions.is-exiting .chip-slice--3 {
+  animation: glitchExitLeft 0.4s ease-in 0.06s forwards;
+}
+.suggestions.is-exiting .chip-slice--4 {
+  animation: glitchExitRight 0.4s ease-in 0.09s forwards;
+}
+
+/* Kaskade: chip 2 og 3 starter lidt senere end chip 1 */
+.suggestions.is-exiting .suggestion-chip:nth-child(2) .chip-slice {
+  animation-delay: 0.08s;
+}
+.suggestions.is-exiting .suggestion-chip:nth-child(2) .chip-slice--2 {
+  animation-delay: 0.11s;
+}
+.suggestions.is-exiting .suggestion-chip:nth-child(2) .chip-slice--3 {
+  animation-delay: 0.14s;
+}
+.suggestions.is-exiting .suggestion-chip:nth-child(2) .chip-slice--4 {
+  animation-delay: 0.17s;
+}
+
+.suggestions.is-exiting .suggestion-chip:nth-child(3) .chip-slice {
+  animation-delay: 0.16s;
+}
+.suggestions.is-exiting .suggestion-chip:nth-child(3) .chip-slice--2 {
+  animation-delay: 0.19s;
+}
+.suggestions.is-exiting .suggestion-chip:nth-child(3) .chip-slice--3 {
+  animation-delay: 0.22s;
+}
+.suggestions.is-exiting .suggestion-chip:nth-child(3) .chip-slice--4 {
+  animation-delay: 0.25s;
+}
+
+/* ==========================================================================
+   OVERGANG, fortsat: matrix-dyk (warp) + chat-vindue folder sig åbent
+   ========================================================================== */
+
+body.is-warping #bg-layer-0 {
+  animation: warpScale0 3.2s linear forwards;
+}
+body.is-warping #bg-layer-1 {
+  animation: warpScale1 3.2s linear forwards;
+}
+body.is-warping #bg-layer-2 {
+  animation: warpScale2 3.2s linear forwards;
+}
+body.is-warping #bg-layer-3 {
+  animation: warpScale3 3.2s linear forwards;
+}
+body.is-warping #bg-layer-4 {
+  animation: warpScale4 3.2s linear forwards;
+}
+body.is-warping #bg-layer-5 {
+  animation: warpScale5 3.2s linear forwards;
+}
+body.is-warping #bg-layer-6 {
+  animation: warpScale6 3.2s linear forwards;
+}
+@keyframes warpScale0 {
+  0% {
+    transform: scale(1);
+    animation-timing-function: ease-in;
+  }
+  35%,
+  100% {
+    transform: scale(1.3);
+  }
+}
+@keyframes warpScale1 {
+  0% {
+    transform: scale(1);
+    animation-timing-function: ease-in;
+  }
+  35%,
+  100% {
+    transform: scale(1.5);
+  }
+}
+@keyframes warpScale2 {
+  0% {
+    transform: scale(1);
+    animation-timing-function: ease-in;
+  }
+  35%,
+  100% {
+    transform: scale(1.75);
+  }
+}
+@keyframes warpScale3 {
+  0% {
+    transform: scale(1);
+    animation-timing-function: ease-in;
+  }
+  35%,
+  100% {
+    transform: scale(2.05);
+  }
+}
+@keyframes warpScale4 {
+  0% {
+    transform: scale(1);
+    animation-timing-function: ease-in;
+  }
+  35%,
+  100% {
+    transform: scale(2.4);
+  }
+}
+@keyframes warpScale5 {
+  0% {
+    transform: scale(1);
+    animation-timing-function: ease-in;
+  }
+  35%,
+  100% {
+    transform: scale(2.75);
+  }
+}
+@keyframes warpScale6 {
+  0% {
+    transform: scale(1);
+    animation-timing-function: ease-in;
+  }
+  35%,
+  100% {
+    transform: scale(3.1);
+  }
+}
+
+.grid-floor {
+  position: fixed;
+  transition: height 260ms ease-out;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 25vh;
+  z-index: 0;
+  pointer-events: none;
+  transform: translateY(100%);
+  /* Beskærer den nederste del af gulvet væk visuelt — den del der ligger
+     et godt stykke under hologram-keglens base og bare er tomt gitter.
+     Selve elementets højde (25vh) er urørt, så horisonten og keglens
+     geometri i bg.js forbliver nøjagtig som den er. Justér de to
+     procenttal for at gøre det synlige gulv kortere/længere: første tal
+     = hvor langt ned gitteret er helt skarpt, andet tal = hvor det er
+     helt væk. Bliver keglens spidse bund pludselig "skåret lige af" i
+     stedet for at ende naturligt, er tallene sat for lavt — sæt dem op. */
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    black 0%,
+    black 60%,
+    transparent 80%
+  );
+  mask-image: linear-gradient(to bottom, black 0%, black 60%, transparent 80%);
+}
+
+.grid-floor.is-rising {
+  animation: gridFloorRise 900ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes gridFloorRise {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* --- Chat-vinduet (beskedhistorikken) folder sig åbent — spejlvendt af
+   velkomst-panelets luk-animation --- */
+
+.messages.is-opening {
+  transform-origin: bottom center;
+  animation: chatOpen 700ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes chatOpen {
+  0% {
+    transform: scaleY(0.05);
+    opacity: 0.25;
+  }
+  100% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+/* "Ny chat": chatvinduet slukker som et CRT-tv, og velkomsten glitcher ind */
+.messages.is-closing {
+  transform-origin: center;
+  pointer-events: none;
+  animation: chatClose 400ms cubic-bezier(0.6, 0, 0.9, 0.4) forwards;
+}
+
+@keyframes chatClose {
+  0% {
+    transform: scale(1, 1);
+    filter: brightness(1);
+  }
+  55% {
+    transform: scale(1, 0.012);
+    filter: brightness(3);
+  }
+  80% {
+    transform: scale(0.3, 0.012);
+    filter: brightness(4);
+  }
+  100% {
+    transform: scale(0, 0.004);
+    filter: brightness(4);
+    opacity: 0;
+  }
+}
+
+.is-entering {
+  animation: welcomeGlitchIn 220ms steps(1, end) both;
+}
+
+@keyframes welcomeGlitchIn {
+  0% {
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+    transform: translateX(-8px);
+    filter: drop-shadow(-5px 0 0 rgba(51, 194, 204, 0.9))
+      drop-shadow(5px 0 0 rgba(234, 72, 132, 0.9));
+  }
+  40% {
+    transform: translateX(6px);
+    filter: drop-shadow(4px 0 0 rgba(51, 194, 204, 0.8))
+      drop-shadow(-4px 0 0 rgba(234, 72, 132, 0.8));
+  }
+  65% {
+    transform: translateX(-3px);
+    filter: drop-shadow(-2px 0 0 rgba(51, 194, 204, 0.7))
+      drop-shadow(2px 0 0 rgba(234, 72, 132, 0.7));
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+/* --- Blød scroll i chatvinduet --- */
+
+@property --fade-top {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+
+@property --fade-bottom {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+
+.messages-inner {
+  --fade-top: 0px;
+  --fade-bottom: 0px;
+  overscroll-behavior: contain;
+  scrollbar-color: rgba(51, 194, 204, 0.12) transparent;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 var(--fade-top),
+    #000 calc(100% - var(--fade-bottom)),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 var(--fade-top),
+    #000 calc(100% - var(--fade-bottom)),
+    transparent 100%
+  );
+  transition:
+    --fade-top 0.25s ease,
+    --fade-bottom 0.25s ease,
+    scrollbar-color 0.3s ease;
+}
+
+.messages-inner.can-scroll-up {
+  --fade-top: 40px;
+}
+.messages-inner.can-scroll-down {
+  --fade-bottom: 40px;
+}
+
+.messages-inner.is-scrolling {
+  scrollbar-color: var(--color-aqua) transparent;
+}
+
+/* ==========================================================================
+   SIDEBILLEDER: spawner i whitespace ved siden af chatten, med samme glitch
+   som hero-billedet (genbruger heroSlice1-4 / heroRgbR / heroRgbB / heroJolt).
+   JS sætter --img, --w, --offset, --top, --tilt og --gd (glitch-forsinkelse).
+   ========================================================================== */
+
+.side-image {
+  position: fixed;
+  top: var(--top, 20vh);
+  width: var(--w, 280px);
+  margin: 0;
+  z-index: 2;
+  pointer-events: none;
+  user-select: none;
+  border: 1px solid var(--color-aqua-dim);
+  box-shadow: var(--glow-sm);
+  transform: rotate(var(--tilt, 0deg));
+  animation:
+    heroJolt 6.4s infinite linear var(--gd, 0s),
+    sideIn 0.7s linear 1;
+}
+
+.side-image--left {
+  left: var(--offset, 20px);
+}
+.side-image--right {
+  right: var(--offset, 20px);
+}
+
+.side-image__img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.side-image__tint,
+.side-image__slice,
+.side-image__rgb,
+.side-image__noise {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.side-image__tint {
+  background: var(--color-aqua);
+  mix-blend-mode: color;
+  opacity: 0.45;
+}
+
+.side-image__slice,
+.side-image__rgb {
+  background-image: var(--img);
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  opacity: 0;
+}
+
+.side-image__slice--1 {
+  clip-path: inset(0 0 75% 0);
+  animation: heroSlice1 6.4s infinite linear var(--gd, 0s);
+}
+.side-image__slice--2 {
+  clip-path: inset(25% 0 50% 0);
+  animation: heroSlice2 6.4s infinite linear var(--gd, 0s);
+}
+.side-image__slice--3 {
+  clip-path: inset(50% 0 25% 0);
+  animation: heroSlice3 6.4s infinite linear var(--gd, 0s);
+}
+.side-image__slice--4 {
+  clip-path: inset(75% 0 0 0);
+  animation: heroSlice4 6.4s infinite linear var(--gd, 0s);
+}
+
+.side-image__rgb--r {
+  filter: url(#glitch-red-channel);
+  mix-blend-mode: screen;
+  animation:
+    heroRgbR 6.4s infinite linear var(--gd, 0s),
+    sideRgbInR 0.7s linear 1;
+}
+.side-image__rgb--b {
+  filter: url(#glitch-blue-channel);
+  mix-blend-mode: screen;
+  animation:
+    heroRgbB 6.4s infinite linear var(--gd, 0s),
+    sideRgbInB 0.7s linear 1;
+}
+
+/* Svag static-tekstur som på hero-billedet */
+.side-image__noise {
+  mix-blend-mode: overlay;
+  opacity: 0.5;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 250px 250px;
+  animation: heroIdleStatic 0.2s steps(1) infinite;
+}
+
+/* --- Spawn: flimrer ind med RGB-split og støj --- */
+@keyframes sideIn {
+  0% {
+    opacity: 0;
+    filter: contrast(2) brightness(1.6);
+  }
+  12% {
+    opacity: 1;
+    transform: rotate(var(--tilt, 0deg)) translateX(-10px);
+  }
+  20% {
+    opacity: 0;
+  }
+  32% {
+    opacity: 1;
+    transform: rotate(var(--tilt, 0deg)) translateX(8px);
+    filter: contrast(1.6) brightness(1.3);
+  }
+  45% {
+    opacity: 0.2;
+    transform: rotate(var(--tilt, 0deg));
+  }
+  58% {
+    opacity: 1;
+    filter: contrast(1.3) brightness(1.1);
+  }
+  100% {
+    opacity: 1;
+    transform: rotate(var(--tilt, 0deg));
+    filter: none;
+  }
+}
+@keyframes sideRgbInR {
+  0%,
+  100% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+  10%,
+  60% {
+    opacity: 0.85;
+  }
+  25% {
+    transform: translateX(10px);
+  }
+  45% {
+    transform: translateX(-6px);
+  }
+}
+@keyframes sideRgbInB {
+  0%,
+  100% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+  10%,
+  60% {
+    opacity: 0.85;
+  }
+  25% {
+    transform: translateX(-10px);
+  }
+  45% {
+    transform: translateX(6px);
+  }
+}
+
+/* --- Væk: glitcher ud --- */
+.side-image.is-leaving {
+  animation: sideOut 0.45s linear forwards;
+}
+.side-image.is-leaving .side-image__slice,
+.side-image.is-leaving .side-image__rgb {
+  animation: none;
+}
+@keyframes sideOut {
+  0% {
+    opacity: 1;
+  }
+  20% {
+    opacity: 0.3;
+    transform: rotate(var(--tilt, 0deg)) translateX(8px);
+    filter: contrast(2) brightness(1.5);
+  }
+  40% {
+    opacity: 1;
+    transform: rotate(var(--tilt, 0deg)) translateX(-8px);
+  }
+  70% {
+    opacity: 0.4;
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--tilt, 0deg));
+  }
+}
+
+/* Ingen plads ved siden af chatten: vis ikke billeder */
+@media (max-width: 1100px) {
+  .side-image {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .side-image,
+  .side-image__slice,
+  .side-image__rgb,
+  .side-image__noise {
+    animation: none;
+  }
+}
+
+/* --- Footer --- */
+
+footer {
+  text-align: center;
+  padding: 1rem;
+  font-size: 0.75rem;
+  color: var(--color-text-dim);
+}
+
+/* React: #root er bare en beholder og må ikke påvirke layoutet */
+#root {
+  display: contents;
+}
