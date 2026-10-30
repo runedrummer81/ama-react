@@ -4,7 +4,7 @@ import answersRouter from "./routes/answers.js";
 import cors from "cors";
 
 const app = express();
-const port = 3004;
+const port = process.env.PORT ?? 3004;
 
 console.log("GROQ_API_KEY loaded:", Boolean(process.env.GROQ_API_KEY));
 
@@ -42,10 +42,12 @@ app.post("/api/test-groq", async (request, response) => {
 });
 
 app.use(express.json());
-app.use(cors({ origin: "http://localhost:5173" }));
+app.use(cors({ origin: process.env.CLIENT_URL ?? "http://localhost:5173" }));
 
 app.use("/messages", messagesRouter);
-app.use("/answers", answersRouter);
+if (process.env.ENABLE_ANSWERS_API === "true") {
+  app.use("/answers", answersRouter);
+}
 
 app.use((request, response) => {
   response.status(404).json({ error: "Ukendt sti" });
@@ -56,6 +58,10 @@ app.use((error, request, response, next) => {
   response.status(500).json({ error: error.message });
 });
 
-app.listen(port, () => {
+app.listen(port, (error) => {
+  if (error) {
+    console.error("Kunne ikke starte serveren:", error.message);
+    return;
+  }
   console.log(`Server is running at http://localhost:${port}`);
 });

@@ -1,15 +1,12 @@
 import express from "express";
-import {
-  loadMessages,
-  saveMessages,
-  loadTopicStats,
-  saveTopicStats,
-} from "../data/messages.js";
+import { loadTopicStats, saveTopicStats } from "../data/messages.js";
 import { loadAnswers, findBestAnswer } from "../data/answers.js";
 import { detectAttack, attackReply } from "../data/security.js";
 import { askGroq } from "../data/groq.js";
 import { buildKnowledge } from "../data/knowledge.js";
+const MAX_QUESTION_LENGTH = 280; // samme som maxlength i klienten
 
+// Kategorier, der ikke er et emne (se også buildContext)
 const NOT_A_TOPIC = [
   "fallback",
   "opfoelgning",
@@ -17,7 +14,29 @@ const NOT_A_TOPIC = [
   "angreb",
 ];
 
-const MAX_QUESTION_LENGTH = 280; // samme som maxlength i klienten
+const MAX_HISTORY = 40; // højst så mange beskeder tager vi imod
+const MAX_HISTORY_TEXT = 1500; // højst så mange tegn pr. besked
+
+// Klienten sender samtalen med. Vi stoler ikke blindt på den: kun kendte
+// felter, kun de seneste beskeder, og tekster har en maksimal længde.
+function cleanHistory(raw) {
+  if (!Array.isArray(raw)) return [];
+
+  return raw
+    .filter(
+      (m) =>
+        (m?.type === "question" || m?.type === "answer") &&
+        typeof m.text === "string",
+    )
+    .slice(-MAX_HISTORY)
+    .map((m) => ({
+      type: m.type,
+      text: m.text.slice(0, MAX_HISTORY_TEXT),
+      category: typeof m.category === "string" ? m.category : undefined,
+      pool: typeof m.pool === "string" ? m.pool : undefined,
+      variant: Number.isInteger(m.variant) ? m.variant : undefined,
+    }));
+}
 
 function sanitizeQuestion(input) {
   return input.replace(/[\u0000-\u001F\u007F]/g, "");
@@ -50,18 +69,13 @@ function buildContext(messages) {
 
 const router = express.Router();
 
-router.get("/", async (request, response) => {
-  const messages = await loadMessages();
-  response.json(messages);
-});
-
 router.post("/", async (request, response) => {
   if (typeof request.body?.question !== "string") {
     response.status(400).json({ error: "Skriv et spørgsmål, før du sender." });
     return;
   }
 
-  const messages = await loadMessages();
+  const messages = cleanHistory(request.body.history);
   const topicStats = await loadTopicStats();
   const question = sanitizeQuestion(request.body.question).trim();
 
@@ -101,6 +115,7 @@ router.post("/", async (request, response) => {
     }));
     history.push({ role: "user", content: question });
 
+    // Ingen emne ramt ("hvorfor?", "fortæl mere")? Så bruger vi det sidste emne.
     const category = NOT_A_TOPIC.includes(result.category)
       ? context.lastCategory
       : result.category;
@@ -114,7 +129,6 @@ router.post("/", async (request, response) => {
     text: question,
     createdAt: new Date().toISOString(),
   };
-  messages.push(message);
 
   const answerMessage = {
     type: "answer",
@@ -126,22 +140,15 @@ router.post("/", async (request, response) => {
   };
   // Valgfrit billede fra answers.json ({ src, alt }).
   if (result.image) answerMessage.image = result.image;
-  messages.push(answerMessage);
 
   // Spørgsmål uden træffer tælles under "ukendt", så du kan se, hvad besøgende
   // spørger om, som botten endnu ikke kan svare på.
   const statKey = result.matched ? result.category : "ukendt";
   topicStats[statKey] = (topicStats[statKey] ?? 0) + 1;
 
-  await saveMessages(messages);
   await saveTopicStats(topicStats);
 
   response.status(201).json({ question: message, answer: answerMessage });
-});
-
-router.delete("/", async (request, response) => {
-  await saveMessages([]);
-  response.status(204).send();
 });
 
 export default router;

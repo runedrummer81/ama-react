@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { deleteMessages, getMessages, postQuestion } from "./api.js";
+import { postQuestion } from "./api.js";
 import {
   CHAT_CLOSE_MS,
   CHAT_OPEN_MS,
@@ -16,17 +16,35 @@ import Welcome from "./components/Welcome.jsx";
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+const STORAGE_KEY = "ama-messages";
+
+function loadSavedMessages() {
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(STORAGE_KEY));
+    return Array.isArray(saved) ? saved : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveMessages(messages) {
+  try {
+    const plain = messages.map(({ animate, ...rest }) => rest);
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(plain));
+  } catch {}
+}
+
 export default function App() {
   // "welcome" = velkomstskærmen, "chat" = chatvinduet. Aldrig begge.
-  const [view, setView] = useState("welcome");
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState(loadSavedMessages);
+  const [view, setView] = useState(messages.length > 0 ? "chat" : "welcome");
   const [welcomeText, setWelcomeText] = useState("");
 
   // Animationsfaser (erstatter alle classList.add/remove i den gamle app.js)
   const [exitStage, setExitStage] = useState(null); // null | "sending" | "collapsing" | "flying"
   const [chatAnim, setChatAnim] = useState(null); // null | "opening" | "closing"
   const [welcomeEntering, setWelcomeEntering] = useState(false);
-  const [heroHidden, setHeroHidden] = useState(false);
+  const [heroHidden, setHeroHidden] = useState(messages.length > 0);
   const [warping, setWarping] = useState(false);
 
   const isResetting = useRef(false);
@@ -47,21 +65,8 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    let cancelled = false;
-
-    getMessages()
-      .then((saved) => {
-        if (cancelled || saved.length === 0) return;
-        setMessages(saved);
-        setView("chat");
-        setHeroHidden(true);
-      })
-      .catch((error) => console.error("Kunne ikke hente beskeder:", error));
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    saveMessages(messages);
+  }, [messages]);
 
   // ---------- Effekter der taler med bg.js / <body> ----------
 
@@ -101,7 +106,7 @@ export default function App() {
   // ---------- Send et spørgsmål ----------
 
   async function sendQuestion(question) {
-    const request = postQuestion(question);
+    const request = postQuestion(question, messages);
     request.catch(() => {}); // fejlen håndteres, når vi await'er nedenfor
 
     // Allerede inde i en chat: ingen overgang, bare vis svaret.
@@ -178,11 +183,8 @@ export default function App() {
     isResetting.current = true;
 
     try {
-      const deleting = deleteMessages();
-
       // 1) Chatvinduet slukker.
       await playChatClose();
-      await deleting;
 
       // 2) Ryd op og vis velkomstskærmen igen.
       setMessages([]);
